@@ -6,13 +6,16 @@ app = Flask(__name__)
 CORS(app)  # Permite la comunicación segura entre tu HTML y esta API
 
 # Función para establecer conexión con tu servidor local de MySQL (XAMPP)
+import os
+import mysql.connector
+
 def get_db_connection():
     return mysql.connector.connect(
-        host="kafka-2f630777-endersonsivira13-f7e9.d.aivencloud.com:19853",
-        port=19853, # Asegúrate de añadir el puerto si no es el 3306 común
-        user="avnadmin",
-        password="AVNS_6o5xoJHIxTJXkb76O_J",
-        database="kafka-2f630777-endersonsivira13-f7e9.d.aivencloud.com" # Nombre de la base de datos de la nube
+        host=os.environ.get("DB_HOST", "mysql-864f36f-endersonsivira13-f7e9.i.aivencloud.com"),
+        port=int(os.environ.get("DB_PORT", 19840)),
+        user=os.environ.get("DB_USER", "avnadmin"),
+        password=os.environ.get("DB_PASSWORD", "password123"), 
+        database=os.environ.get("DB_NAME", "defaultdb")
     )
 
 # 1. RUTA: Obtener la lista de todos los estudiantes

@@ -1,4 +1,6 @@
-const API_URL = 'http://127.0.0.1:5000/api/estudiantes';
+// CONFIGURACIÓN GLOBAL: Apuntando al backend real en Render
+const API_URL = 'https://control-evaluacion-backend.onrender.com/api/estudiantes';
+const NOTAS_URL = 'https://control-evaluacion-backend.onrender.com/api/notas';
 
 // Sincronizar con el backend tan pronto cargue la interfaz
 document.addEventListener('DOMContentLoaded', () => {
@@ -141,7 +143,7 @@ function renderizarListasDeSecciones() {
 
 let currentSelectedYear = null;
 
-// Modificación: Muestra los estudiantes correspondientes al año elegido
+// Muestra los estudiantes correspondientes al año elegido
 function showYearDetails(year) {
     currentSelectedYear = year;
     document.getElementById('year-menu-grid').style.display = 'none';
@@ -176,7 +178,7 @@ function showYearDetails(year) {
     });
 }
 
-// Busca esta función en tu app.js y actualiza la sección del renderizado de filas:
+// Visualizar calificaciones del estudiante desde la URL de Render
 function viewStudentGrades(cedula, nombres) {
     document.getElementById('year-details-panel').style.display = 'none';
     document.getElementById('student-grades-panel').style.display = 'block';
@@ -184,7 +186,7 @@ function viewStudentGrades(cedula, nombres) {
     document.getElementById('current-student-name').innerText = `Resumen Académico: ${nombres}`;
     document.getElementById('current-student-id').innerText = `Cédula de Identidad: ${cedula}`;
 
-    fetch(`http://127.0.0.1:5000/api/notas/${cedula}`)
+    fetch(`${NOTAS_URL}/${cedula}`)
         .then(response => response.json())
         .then(notas => {
             const tbody = document.getElementById('table-grades-body');
@@ -198,7 +200,7 @@ function viewStudentGrades(cedula, nombres) {
             notas.forEach(n => {
                 const fila = document.createElement('tr');
                 
-                // NUEVA CONDICIÓN: 12 o más aprueba, menor a 12 reprueba
+                // CONDICIÓN: 12 o más aprueba, menor a 12 reprueba
                 const aprobado = parseFloat(n.nota) >= 12.0; 
                 
                 const estadoSpan = aprobado 
@@ -224,12 +226,6 @@ function backToStudentsTable() {
 }
 
 function backToYearMenu() {
-    document.getElementById('year-menu-grid').style.display = 'grid';
-    document.getElementById('year-details-panel').style.display = 'none';
-    document.getElementById('student-grades-panel').style.display = 'none';
-}
-
-function backToYearMenu() {
     const menuGrid = document.getElementById('year-menu-grid');
     const detailsPanel = document.getElementById('year-details-panel');
     if (menuGrid && detailsPanel) {
@@ -250,27 +246,22 @@ function poblarSelectorNotas() {
     }
 }
 
-// NUEVA FUNCIÓN: Se ejecuta cuando cambias el año en la pestaña de Cargar Notas
+// Se ejecuta cuando cambias el año en la pestaña de Cargar Notas
 function filtrarEstudiantesPorAnio() {
     const anioSeleccionado = document.getElementById('select-year-grade').value;
     const selectEstudiante = document.getElementById('select-student-grade');
     
     if (!selectEstudiante) return;
 
-    // Si no hay año seleccionado, vaciar y deshabilitar el campo de estudiante
     if (!anioSeleccionado) {
         selectEstudiante.innerHTML = '<option value="">-- Selecciona primero un año --</option>';
         selectEstudiante.disabled = true;
         return;
     }
 
-    // Obtener estudiantes almacenados globalmente en la ventana
     const estudiantes = window.baseDeDatosEstudiantes || [];
-    
-    // Filtrar: Que tengan asignado el año seleccionado en el menú
     const estudiantesDelAnio = estudiantes.filter(est => est.anio_asignado === parseInt(anioSeleccionado));
 
-    // Limpiar opciones previas
     selectEstudiante.innerHTML = '<option value="">-- Seleccionar Estudiante --</option>';
 
     if (estudiantesDelAnio.length === 0) {
@@ -279,7 +270,6 @@ function filtrarEstudiantesPorAnio() {
         return;
     }
 
-    // Habilitar y poblar con los alumnos correspondientes
     selectEstudiante.disabled = false;
     estudiantesDelAnio.forEach(est => {
         const option = document.createElement('option');
@@ -289,7 +279,7 @@ function filtrarEstudiantesPorAnio() {
     });
 }
 
-// Envía la calificación registrada al servidor backend (POST)
+// Envía la calificación registrada al servidor backend en Render (POST)
 function saveGrade(event) {
     event.preventDefault();
 
@@ -299,7 +289,7 @@ function saveGrade(event) {
         nota: document.getElementById('nota').value
     };
 
-    fetch('http://127.0.0.1:5000/api/notas', {
+    fetch(NOTAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevaNota)

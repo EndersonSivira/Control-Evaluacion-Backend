@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGA - Sistema de Gestión Académica</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+        <!-- BARRA LATERAL DE NAVEGACIÓN -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="bx bxs-graduation"></i>
+                <h2>SGA Public</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="active" onclick="switchTab('dashboard')"><i class="bx bxs-dashboard"></i> Dashboard</a>
+                <a href="#" onclick="switchTab('registro')"><i class="bx bxs-user-plus"></i> Registrar Estudiante</a>
+                <a href="#" onclick="switchTab('secciones')"><i class="bx bxs-institution"></i> Asignar Secciones</a>
+                <a href="#" onclick="switchTab('matricula')"><i class="bx bxs-folder-open"></i> Matrícula Activa</a>
+                <a href="#" onclick="switchTab('notas')"><i class="bx bxs-file-plus"></i> Cargar Notas</a>
+            </nav>
+        </aside>
+
+        <!-- AREA DE CONTENIDO PRINCIPAL -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Control de Evaluación Académica</h1>
+                <div class="user-profile">
+                    <span>Administrador</span>
+                    <i class="bx bxs-user-circle"></i>
+                </div>
+            </header>
+
+            <!-- VISTA: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="cards-grid">
+                    <div class="card">
+                        <i class="bx bxs-group icon-card"></i>
+                        <div>
+                            <h3>Total Estudiantes</h3>
+                            <p id="counter-total">0</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <i class="bx bxs-select-multiple icon-card"></i>
+                        <div>
+                            <h3>Secciones Activas</h3>
+                            <p>5 Secciones</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: REGISTRO DE ESTUDIANTES -->
+            <section id="tab-registro" class="tab-content">
+                <div class="form-container">
+                    <h2><i class="bx bxs-user-add"></i> Registro de Nuevo Estudiante</h2>
+                    <form id="student-form" onsubmit="saveStudent(event)">
+                        <div class="form-group">
+                            <label for="cedula">Cédula de Identidad *</label>
+                            <input type="text" id="cedula" required placeholder="Ej. V-25123456">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nombres">Nombres y Apellidos *</label>
+                                <input type="text" id="nombres" required placeholder="Ej. Juan Pérez">
+                            </div>
+                            <div class="form-group">
+                                <label for="edad">Edad *</label>
+                                <input type="number" id="edad" min="10" max="25" required placeholder="Ej. 14">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="correo">Correo Electrónico *</label>
+                                <input type="email" id="correo" required placeholder="juan@correo.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="telefono">Teléfono (Opcional)</label>
+                                <input type="tel" id="telefono" placeholder="Ej. 04125555555">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">Guardar en Base de Datos</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- VISTA: ASIGNACIÓN DE SECCIONES (1ero a 5to Año) -->
+            <section id="tab-secciones" class="tab-content">
+                <h2>Control de Matrícula por Año</h2>
+                <div class="years-container">
+                    <!-- Tarjetas repetidas para los 5 años -->
+                    <div class="year-card">
+                        <h3>1er Año</h3>
+                        <div class="assign-zone">
+                            <select class="student-select" id="select-year-1">
+                                <option value="">-- Seleccionar --</option>
+                            </select>
+                            <button onclick="assignToYear(1)" class="btn-assign">Asignar</button>
+                        </div>
+                        <ul class="student-list" id="list-year-1"></ul>
+                    </div>
+
+                    <div class="year-card">
+                        <h3>2do Año</h3>
+                        <div class="assign-zone">
+                            <select class="student-select" id="select-year-2">
+                                <option value="">-- Seleccionar --</option>
+                            </select>
+                            <button onclick="assignToYear(2)" class="btn-assign">Asignar</button>
+                        </div>
+                        <ul class="student-list" id="list-year-2"></ul>
+                    </div>
+
+                    <div class="year-card">
+                        <h3>3er Año</h3>
+                        <div class="assign-zone">
+                            <select class="student-select" id="select-year-3">
+                                <option value="">-- Seleccionar --</option>
+                            </select>
+                            <button onclick="assignToYear(3)" class="btn-assign">Asignar</button>
+                        </div>
+                        <ul class="student-list" id="list-year-3"></ul>
+                    </div>
+
+                    <div class="year-card">
+                        <h3>4to Año</h3>
+                        <div class="assign-zone">
+                            <select class="student-select" id="select-year-4">
+                                <option value="">-- Seleccionar --</option>
+                            </select>
+                            <button onclick="assignToYear(4)" class="btn-assign">Asignar</button>
+                        </div>
+                        <ul class="student-list" id="list-year-4"></ul>
+                    </div>
+
+                    <div class="year-card">
+                        <h3>5to Año</h3>
+                        <div class="assign-zone">
+                            <select class="student-select" id="select-year-5">
+                                <option value="">-- Seleccionar --</option>
+                            </select>
+                            <button onclick="assignToYear(5)" class="btn-assign">Asignar</button>
+                        </div>
+                        <ul class="student-list" id="list-year-5"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: MATRÍCULA ACTIVA (Expedientes y Calificaciones por Año) -->
+<section id="tab-matricula" class="tab-content">
+    <h2><i class="bx bxs-folder-open"></i> Control de Matrícula Activa</h2>
+    <p style="color: #64748b; margin-bottom: 1.5rem;">Selecciona un año para auditar los estudiantes inscritos y gestionar sus calificaciones.</p>
+
+    <!-- Sub-vista 1: Menú de selección de año -->
+    <div id="year-menu-grid" class="years-container">
+        <button class="btn-year-nav" onclick="showYearDetails(1)">1er Año <i class="bx bx-chevron-right"></i></button>
+        <button class="btn-year-nav" onclick="showYearDetails(2)">2do Año <i class="bx bx-chevron-right"></i></button>
+        <button class="btn-year-nav" onclick="showYearDetails(3)">3er Año <i class="bx bx-chevron-right"></i></button>
+        <button class="btn-year-nav" onclick="showYearDetails(4)">4to Año <i class="bx bx-chevron-right"></i></button>
+        <button class="btn-year-nav" onclick="showYearDetails(5)">5to Año <i class="bx bx-chevron-right"></i></button>
+    </div>
+
+    <!-- Sub-vista 2: Tabla de estudiantes del año seleccionado -->
+    <div id="year-details-panel" style="display: none; margin-top: 1.5rem;">
+        <button class="btn-back" onclick="backToYearMenu()"><i class="bx bx-arrow-back"></i> Volver al Menú</button>
+        
+        <div class="table-container" style="background: var(--white); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 1rem;">
+            <h3 id="current-viewing-year" style="color: var(--primary-color); margin-bottom: 1rem;">Estudiantes</h3>
+            <table class="professional-table">
+                <thead>
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombres y Apellidos</th>
+                        <th>Correo Electrónico</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="table-students-body">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sub-vista 3: Historial y Boleta de Notas del Estudiante Seleccionado -->
+    <div id="student-grades-panel" style="display: none; margin-top: 1.5rem;">
+        <button class="btn-back" onclick="backToStudentsTable()"><i class="bx bx-arrow-back"></i> Volver a la Lista</button>
+        
+        <div class="table-container" style="background: var(--white); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 1rem;">
+            <h3 id="current-student-name" style="color: var(--primary-color);">Boleta de Calificaciones</h3>
+            <p id="current-student-id" style="color: #64748b; margin-bottom: 1.5rem; font-weight: 600;"></p>
+            
+            <table class="professional-table">
+                <thead>
+                    <tr>
+                        <th>Materia / Unidad Curricular</th>
+                        <th>Calificación</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="table-grades-body">
+                    <!-- Se llena dinámicamente desde la API -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+            <!-- VISTA: CARGAR NOTAS -->
+<section id="tab-notas" class="tab-content">
+    <div class="form-container">
+        <h2><i class="bx bxs-file-plus"></i> Cargar Notas de Evaluación</h2>
+        <form id="notes-form" onsubmit="saveGrade(event)">
+            
+            <div class="form-row">
+                <!-- NUEVO: Selector de Año Académico -->
+                <div class="form-group">
+                    <label for="select-year-grade">Año Académico *</label>
+                    <select class="student-select" id="select-year-grade" required onchange="filtrarEstudiantesPorAnio()">
+                        <option value="">-- Seleccionar Año --</option>
+                        <option value="1">1er Año</option>
+                        <option value="2">2do Año</option>
+                        <option value="3">3er Año</option>
+                        <option value="4">4to Año</option>
+                        <option value="5">5to Año</option>
+                    </select>
+                </div>
+
+                <!-- Selector de Estudiante (Filtrado dinámicamente por JS) -->
+                <div class="form-group">
+                    <label for="select-student-grade">Estudiante *</label>
+                    <select class="student-select" id="select-student-grade" required disabled>
+                        <option value="">-- Selecciona primero un año --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="materia">Materia / Unidad Curricular *</label>
+                    <input type="text" id="materia" required placeholder="Ej. Matemática, Informática">
+                </div>
+                <div class="form-group">
+                    <label for="nota">Calificación *</label>
+                    <input type="number" id="nota" min="0" max="20" step="0.1" required placeholder="Ej. 18.5">
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Registrar Calificación</button>
+        </form>
+    </div>
+</section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

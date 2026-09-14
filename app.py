@@ -1,14 +1,12 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
 
 app = Flask(__name__)
-CORS(app)  # Permite la comunicación segura entre tu HTML y esta API
+CORS(app)  # Permite la comunicación entre el frontend y el backend
 
-# Función para establecer conexión con tu servidor local de MySQL (XAMPP)
-import os
-import mysql.connector
-
+# Función para establecer conexión con la base de datos MySQL (Local o Aiven Cloud)
 def get_db_connection():
     return mysql.connector.connect(
         host=os.environ.get("DB_HOST", "mysql-864f36f-endersonsivira13-f7e9.i.aivencloud.com"),
@@ -18,12 +16,20 @@ def get_db_connection():
         database=os.environ.get("DB_NAME", "defaultdb")
     )
 
-# 1. RUTA: Obtener la lista de todos los estudiantes
+# 0. RUTA BASE: Verificación de estado del servidor
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({
+        "status": "Servidor Activo",
+        "mensaje": "Backend de Control de Evaluación funcionando correctamente"
+    }), 200
+
+# 1. RUTA: Obtener la lista de todos los estudiantes (Panel Admin)
 @app.route('/api/estudiantes', methods=['GET'])
 def obtener_estudiantes():
     try:
         conn = get_db_connection()
-        cursor = conn.connector.cursor(dictionary=True) if hasattr(conn, 'connector') else conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM estudiantes")
         estudiantes = cursor.fetchall()
         cursor.close()
@@ -32,12 +38,11 @@ def obtener_estudiantes():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 2. RUTA: Registrar un nuevo estudiante en la base de datos
+# 2. RUTA: Registrar un nuevo estudiante
 @app.route('/api/estudiantes', methods=['POST'])
 def guardar_estudiante():
     datos = request.json
     
-    # Validar que los campos obligatorios no vengan vacíos
     if not datos.get('cedula') or not datos.get('nombres') or not datos.get('edad') or not datos.get('correo'):
         return jsonify({"error": "Faltan campos obligatorios por rellenar"}), 400
         
@@ -45,18 +50,18 @@ def guardar_estudiante():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Verificar si la cédula ya existe para evitar duplicados
         cursor.execute("SELECT id FROM estudiantes WHERE cedula = %s", (datos['cedula'],))
         if cursor.fetchone():
+            cursor.close()
+            conn.close()
             return jsonify({"error": "La cédula ingresada ya se encuentra registrada"}), 400
 
-        # Insertar el nuevo registro (comienza con el año académico en NULL)
         query = """INSERT INTO estudiantes (cedula, nombres, edad, correo, telefono, anio_asignado) 
                    VALUES (%s, %s, %s, %s, %s, NULL)"""
         valores = (datos['cedula'], datos['nombres'], int(datos['edad']), datos['correo'], datos.get('telefono'))
         
         cursor.execute(query, valores)
-        conn.commit()  # Confirma los cambios en MySQL
+        conn.commit()
         
         cursor.close()
         conn.close()
@@ -64,7 +69,7 @@ def guardar_estudiante():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 3. RUTA: Asignar o cambiar el año académico (1ero a 5to) de un estudiante
+# 3. RUTA: Asignar o cambiar el año académico de un estudiante
 @app.route('/api/estudiantes/asignar', methods=['PUT'])
 def asignar_anio():
     datos = request.json
@@ -81,8 +86,8 @@ def asignar_anio():
         return jsonify({"message": "Estudiante asignado correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-# 4. RUTA: Registrar una nota para un estudiante específico
+
+# 4. RUTA: Registrar una nota para un estudiante
 @app.route('/api/notas', methods=['POST'])
 def guardar_nota():
     datos = request.json
@@ -94,7 +99,6 @@ def guardar_nota():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Insertar la nota en la tabla
         query = "INSERT INTO notas (cedula_estudiante, materia, nota) VALUES (%s, %s, %s)"
         valores = (datos['cedula'], datos['materia'], float(datos['nota']))
         
@@ -106,8 +110,8 @@ def guardar_nota():
         return jsonify({"message": "Nota registrada correctamente"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    # 5. RUTA: Obtener las notas de un estudiante por su cédula
+
+# 5. RUTA: Obtener solo las notas por cédula
 @app.route('/api/notas/<cedula>', methods=['GET'])
 def obtener_notas_estudiante(cedula):
     try:
@@ -124,6 +128,40 @@ def obtener_notas_estudiante(cedula):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Arranca el servidor en el puerto 5000
+# 6. RUTA PÚBLICA ESTUDIANTES: Consulta combinada (Nombre + Notas) por Cédula
+@app.route('/api/estudiantes/consulta/<cedula>', methods=['GET'])
+def consultar_estudiante_publico(cedula):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Buscar información del estudiante
+        cursor.execute("SELECT nombres, cedula, anio_asignado FROM estudiantes WHERE cedula = %s", (cedula,))
+        estudiante = cursor.fetchone()
+        
+        if not estudiante:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Estudiante no encontrado en el sistema"}), 404
+            
+        # Buscar sus notas asociadas
+        cursor.execute("SELECT materia, nota FROM notas WHERE cedula_estudiante = %s", (cedula,))
+        notas = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "estudiante": estudiante["nombres"],
+            "cedula": estudiante["cedula"],
+            "anio": estudiante["anio_asignado"],
+            "notas": notas
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Arranca la aplicación dinámicamente según el entorno (Local o Render)
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
